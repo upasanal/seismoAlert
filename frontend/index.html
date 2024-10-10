@@ -2,24 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earthquake Alerts</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to the CSS file -->
+    <meta name="author" content="Upasana Lamsal">   
+    <link rel="stylesheet" href="style.css">
+    <title>SeismoAlert: Real-time Earthquake Alert System</title>
 </head>
 <body>
-    <header>
-        <h1>Earthquake Alert System</h1>
-    </header>
+    <div class="topnav">
+        <img alt="SeismoAlert Logo" src="../assets/logo.png">
+        <a class="active" href="./index.html">Home</a>
+        <a href="./shelters.html">Safe Zones</a>
+        <a href="./chat.html">Live Chat</a>
+    </div>
+
+    <div class="maincontainer">
+        <img alt="Earthquake Visualization" src="../assets/filler.png">
+        <div class="mainText">
+            <h1><span id="highlight">SeismoAlert:</span> Stay Safe, Stay Informed</h1>
+            <p>"Real-time Alerts for Earthquake Safety"</p>
+        </div>
+    </div>
+
+    <div id="alerts" class="alerts-container">
+        <!-- Earthquake alerts will be dynamically loaded here -->
+    </div>
+
+    <div class="bottomnav">
+        <p class="footer-text">Designed by <a class="highlight" href="https://www.linkedin.com/in/upasana-lamsal/">Upasana Lamsal</a> 2024</p>
+    </div>
     
-    <main>
-        <p>Current Earthquake Alerts:</p>
-        <pre id="alerts">Loading...</pre> <!-- Where earthquake data will be shown -->
-    </main>
-
-    <footer>
-        <p>&copy; 2024 Earthquake Alerts</p>
-    </footer>
-
-    <script src="app.js"></script> <!-- Link to the JS file -->
+    <script src="app.js"></script>
 </body>
 </html>

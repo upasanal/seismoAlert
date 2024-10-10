@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="Upasana Lamsal">   
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js"></script>
+    <title>SeismoAlert: Live Chat for Affected Areas</title>
+</head>
+<body>
+    <div class="topnav">
+        <img alt="SeismoAlert Logo" src="../assets/logo.png">
+        <a href="./index.html">Home</a>
+        <a href="./shelters.html">Safe Zones</a>
+        <a class="active" href="./chat.html">Live Chat</a>
+    </div>
+    <div class="maincontainer">
+        <img alt="Earthquake Visualization" src="../assets/filler.png">
+    <div class="chat-container">
+        <div class="chat-box" id="chat-box">
+            <!-- Mock chat data -->
+            <div class="chat-message user-message">
+                <strong>User1:</strong> Felt strong shaking in the area. Stay safe everyone!
+            </div>
+            <div class="chat-message other-message">
+                <strong>User2:</strong> Mild tremors here. No visible damage so far.
+            </div>
+            <div class="chat-message user-message">
+                <strong>User3:</strong> Does anyone know where the nearest shelter is?
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-message" placeholder="Type your message here...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
+   
+
+    <div class="bottomnav">
+        <p class="footer-text">Designed by <a class="highlight" href="https://www.linkedin.com/in/upasana-lamsal/">Upasana Lamsal</a> 2024</p>
+    </div>
+    
+</body>
+</html>

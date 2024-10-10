@@ -9,6 +9,19 @@ async function getEarthquakeAlerts() {
     }
 }
 
+async function sendMessage() {
+    const chatBox = document.getElementById('chat-box');
+    const message = document.getElementById('chat-message').value;
+    if (message.trim() !== "") {
+        const newMessage = document.createElement('div');
+        newMessage.classList.add('chat-message', 'other-message');
+        newMessage.innerHTML = `<strong>You:</strong> ${message}`;
+        chatBox.appendChild(newMessage);
+        document.getElementById('chat-message').value = "";
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+}
+
 // Fetch earthquake alerts when the page loads
 window.onload = getEarthquakeAlerts;
 
