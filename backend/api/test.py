@@ -9,4 +9,4 @@ def read_root():
 @app.get("/earthquake-alerts")
 def get_earthquake_alerts():
     # Example: Fetch earthquake data from external API or database (Week 2)
-    return {"alerts": "This is where earthquake alerts will be displayed."}
+    return {"alerts": "Thiss is where earthquake alertss will be displayed."}
