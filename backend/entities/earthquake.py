@@ -8,5 +8,5 @@ class Earthquake(SQLModel, table=True):
     latitude: float
     longitude: float
     depth: float
-    event_time: str  # Consider using datetime format
-    created_at: Optional[str] = None  # Optional creation time
+    event_time: str  
+    created_at: Optional[str] = None  
