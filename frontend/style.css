@@ -12,25 +12,24 @@ body {
     display: flex;
     align-items: center;
     padding: 10px;
-    box-shadow:0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .topnav a {
     color: #2d3c85;
     text-align: center;
     padding: 14px 20px;
-    text-decoration: black;
+    text-decoration: none;
     font-size: 20px;
     margin-right: 10px;
 }
-
 
 .topnav a:hover {
     background-color: #2d3c85;
     color: #fff;
     box-shadow: -5px 0 #f47a20, 5px 0 #f47a20;
     border-radius: 5px;
-  }
+}
 
 .topnav a.active {
     background-color: #f47a20;
@@ -45,83 +44,117 @@ body {
 
 .maincontainer {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 50px;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
     background-color: #fff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin: 20px;
+    width: 90%; /* Updated width for better alignment */
 }
 
-.mainText{
-    margin-left: 30px;
-}
-.mainText h1 {
-    color: #f47a20;
-    font-size: 40px;
+.lefthalfer,
+.righthalfer {
+    width: 45%;
 }
 
-.mainText p {
-    color: #666;
-    font-size: 20px;
-}
-
-#highlight {
-    color: #f7b921;
-}
-
-.alerts-container {
-    padding: 20px;
-    margin: 20px;
-    background-color: #72c6eb;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.bottomnav {
-    background-color: #2d3c85;
-    color: #fff;
+.slider-container {
+    width: 100%;
     text-align: center;
+    margin-top: 20px;
     padding: 10px;
-}
-
-.footer-text a {
-    color: #f7b921;
-}
-
-.footer-text a:hover {
-    text-decoration: underline;
-}
-
-.shelters-container {
-    padding: 20px;
-    margin: 20px;
-}
-
-.shelter-card {
-    background-color: #ffffff;
+    background-color: #f9f9de;
     border: 2px solid #238db3;
     border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
-.shelter-card h3 {
-    color: #f47a20;
+.slider-container label {
+    color: #2d3c85;
+    font-size: 16px;
+    font-weight: bold;
+    display: block;
     margin-bottom: 10px;
 }
 
-.shelter-card p {
-    color: #333;
-    font-size: 16px;
-    margin: 5px 0;
+#radius-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 10px;
+    background: #238db3;
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.8;
+    transition: opacity .2s;
 }
 
-.shelter-card strong {
+#radius-slider:hover {
+    opacity: 1;
+}
+
+#radius-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #f47a20;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#radius-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #f47a20;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.legend {
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+    width: 15%;
+    margin-top: 20px;
+}
+
+.legend h4 {
+    margin: 0 0 10px;
+    font-size: 16px;
     color: #2d3c85;
 }
 
+.legend ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.legend li {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.legend-color.yellow {
+    background-color: yellow;
+}
+
+.legend-color.orange {
+    background-color: orange;
+}
+
+.legend-color.red {
+    background-color: red;
+}
 
 .chat-container {
     display: flex;
@@ -190,4 +223,48 @@ body {
 
 .chat-input button:hover {
     background-color: #2d3c85;
+}
+
+.bottomnav {
+    background-color: #2d3c85;
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+}
+
+.footer-text a {
+    color: #f7b921;
+}
+
+.footer-text a:hover {
+    text-decoration: underline;
+}
+
+.shelters-container {
+    padding: 20px;
+    margin: 20px;
+}
+
+.shelter-card {
+    background-color: #ffffff;
+    border: 2px solid #238db3;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.shelter-card h3 {
+    color: #f47a20;
+    margin-bottom: 10px;
+}
+
+.shelter-card p {
+    color: #333;
+    font-size: 16px;
+    margin: 5px 0;
+}
+
+.shelter-card strong {
+    color: #2d3c85;
 }

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="author" content="Upasana Lamsal">   
     <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
     <title>SeismoAlert: Real-time Earthquake Alert System</title>
 </head>
 <body>
@@ -26,10 +27,32 @@
         <!-- Earthquake alerts will be dynamically loaded here -->
     </div>
 
+    <div class="sms-signup-container">
+        <h2>Sign Up for SMS Alerts</h2>
+        <input type="text" id="phone-number" placeholder="Enter phone number in E.164 format (e.g., +1234567890)" />
+        <button onclick="subscribeForAlerts()">Subscribe</button>
+    </div>
+
     <div class="bottomnav">
         <p class="footer-text">Designed by <a class="highlight" href="https://www.linkedin.com/in/upasana-lamsal/">Upasana Lamsal</a> 2024</p>
     </div>
-    
-    <script src="app.js"></script>
+
+    <script>
+        // Obtain user's geolocation and initiate WebSocket for earthquake alerts
+        window.onload = function () {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    connectWebSocket(lat, lon);  // Establish WebSocket connection for earthquake alerts
+                }, function (error) {
+                    console.error("Error getting location:", error);
+                    alert("Could not get your location. Please allow location access to get alerts.");
+                });
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        };
+    </script>
 </body>
 </html>
