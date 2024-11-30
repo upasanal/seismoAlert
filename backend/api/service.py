@@ -7,9 +7,15 @@ from backend.models.earthquakeDetails import EarthquakeDetails
 from backend.models.chatDetails  import ChatDetails
 from backend.models.userDetails import UserDetails
 from twilio.rest import Client
+from geopy.distance import geodesic
+import os
+from dotenv import load_dotenv
 
-TWILIO_ACCOUNT_SID = "AC01cf62aea894f2ad931ac36ffc3b42e8"
-TWILIO_AUTH_TOKEN = "0ed98028e6f36e47b436d23c32a41bab"
+load_dotenv()
+
+
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = "+17756373836"
 twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
@@ -20,8 +26,7 @@ def create_tables(engine):
 
     
 def create_earthquake(
-    session: Session, magnitude: float, location: str, latitude: float, longitude: float, depth: float = 0.0
-) -> Earthquake:
+    session: Session, magnitude: float, location: str, latitude: float, longitude: float, event_time: str, depth: float = 0.0) -> Earthquake:
     """
     Manually create an earthquake record in the database.
     """
@@ -31,7 +36,7 @@ def create_earthquake(
         latitude=latitude,
         longitude=longitude,
         depth=depth,
-        event_time=datetime.now(tz=timezone.utc).isoformat(),
+        event_time= event_time,
         created_at=datetime.now(tz=timezone.utc).isoformat(),
     )
     session.add(new_earthquake)
@@ -59,15 +64,23 @@ def create_chat(session: Session, chat_data: ChatDetails) -> ChatMessage:
         anonymous_name=chat_data.anonymous_name,
         message=chat_data.message,
         created_at=datetime.now(tz=timezone.utc).isoformat(),
+        latitude=chat_data.latitude,
+        longitude=chat_data.longitude,
     )
     session.add(chat)
     session.commit()
     session.refresh(chat)
     return chat
 
-def get_chats(session: Session, limit: int = 10) -> List[ChatDetails]:
-    chats = session.exec(select(ChatMessage).order_by(ChatMessage.created_at.desc()).limit(limit)).all()
-    return chats
+def get_chats(session: Session, user_lat: float, user_lon: float, radius: float, limit: int = 10) -> List[ChatDetails]:
+    # Get all chats and filter based on the distance from the user's location
+    chats = session.exec(select(ChatMessage)).all()
+    nearby_chats = [
+        chat for chat in chats
+        if geodesic((user_lat, user_lon), (chat.latitude, chat.longitude)).miles <= radius
+    ]
+    nearby_chats = sorted(nearby_chats, key=lambda c: c.created_at, reverse=True)[:limit]
+    return nearby_chats
 
 def update_chat(session: Session, chat_id: int, updated_message: str):
     chat = session.get(ChatMessage, chat_id)

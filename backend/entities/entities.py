@@ -19,6 +19,8 @@ class ChatMessage(SQLModel, table=True):
     anonymous_name: Optional[str] = None  # Name for anonymous users
     message: str                     # Chat message content
     created_at: Optional[str] = None  # Message timestamp
+    latitude: float
+    longitude: float
 
 # === User Entity ===
 class User(SQLModel, table=True):

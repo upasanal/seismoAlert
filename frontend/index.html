@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="author" content="Upasana Lamsal">   
+    <meta name="author" content="Upasana Lamsal">
     <link rel="stylesheet" href="style.css">
     <script src="app.js" defer></script>
-    <title>SeismoAlert: Real-time Earthquake Alert System</title>
+    <title>SeismoAlert: Real-time Earthquake Alert System for Nepal</title>
 </head>
 <body>
     <div class="topnav">
@@ -15,44 +15,50 @@
         <a href="./chat.html">Live Chat</a>
     </div>
 
-    <div class="maincontainer">
-        <img alt="Earthquake Visualization" src="../assets/filler.png">
-        <div class="mainText">
+    <section class="hero">
+        <div class="hero-content">
             <h1><span id="highlight">SeismoAlert:</span> Stay Safe, Stay Informed</h1>
             <p>"Real-time Alerts for Earthquake Safety"</p>
+            <a href="#subscribe" class="cta-button">Subscribe for Alerts</a>
         </div>
-    </div>
+    </section>
 
-    <div id="alerts" class="alerts-container">
-        <!-- Earthquake alerts will be dynamically loaded here -->
-    </div>
+    <section class="our-mission" id="mission">
+        <h2>Our Mission</h2>
+        <p>At SeismoAlert, our mission is to ensure the safety of our community by providing real-time earthquake alerts and instant communication channels for those in affected areas. Inspired by the frequent earthquakes in Nepal and my Nepalese background, this web app aims to make a real difference in people's lives by offering timely alerts and resources for those in need.</p>
+    </section>
 
-    <div class="sms-signup-container">
-        <h2>Sign Up for SMS Alerts</h2>
-        <input type="text" id="phone-number" placeholder="Enter phone number in E.164 format (e.g., +1234567890)" />
-        <button onclick="subscribeForAlerts()">Subscribe</button>
-    </div>
+    <section class="features">
+        <div class="feature-card">
+            <h3>Real-Time Alerts</h3>
+            <p>Receive immediate notifications of seismic activity directly to your device, allowing you to stay informed when it matters most.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Live Communication</h3>
+            <p>Connect with others in affected areas using our live chat feature, and receive support during emergencies.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Safe Zone Locator</h3>
+            <p>Find nearby shelters and safe zones quickly with our integrated locator feature to guide you to safety.</p>
+        </div>
+    </section>
+
+    <section class="why-it-matters" id="why">
+        <h2>Why This Matters</h2>
+        <p>Earthquakes are an unfortunate reality in Nepal, putting family and friends in danger. SeismoAlert is here to bridge the gap between safety and timely information, giving people the power to act quickly in times of emergency. We aim to provide peace of mind by ensuring that everyone has access to the tools they need to stay safe.</p>
+    </section>
+
+    <section class="subscribe" id="subscribe">
+        <h2>Subscribe for Alerts</h2>
+        <p>Enter your phone number to receive real-time earthquake alerts directly to your phone:</p>
+        <form id="subscribe-form">
+            <input type="text" placeholder="Enter your phone number" required>
+            <button type="submit" class="subscribe-button">Subscribe</button>
+        </form>
+    </section>
 
     <div class="bottomnav">
         <p class="footer-text">Designed by <a class="highlight" href="https://www.linkedin.com/in/upasana-lamsal/">Upasana Lamsal</a> 2024</p>
     </div>
-
-    <script>
-        // Obtain user's geolocation and initiate WebSocket for earthquake alerts
-        window.onload = function () {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    connectWebSocket(lat, lon);  // Establish WebSocket connection for earthquake alerts
-                }, function (error) {
-                    console.error("Error getting location:", error);
-                    alert("Could not get your location. Please allow location access to get alerts.");
-                });
-            } else {
-                alert("Geolocation is not supported by your browser.");
-            }
-        };
-    </script>
 </body>
 </html>

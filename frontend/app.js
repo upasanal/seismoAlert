@@ -25,7 +25,7 @@ function initMap(lat, lon) {
             iconAnchor: [16, 32],
         })
     }).addTo(map);
-    userMarker.bindPopup('<b>You are here</b>').openPopup();
+    userMarker.bindPopup(`<b>You are here</b><br>Latitude: ${lat.toFixed(6)}<br>Longitude: ${lon.toFixed(6)}`).openPopup();
 
     // Fetch and plot earthquakes on the map
     fetchEarthquakeData(lat, lon, radius);
@@ -117,6 +117,7 @@ function updateRadius() {
 
     // Fetch earthquake data with updated radius
     fetchEarthquakeData(lat, lon, radius);
+    loadChatMessages(); 
 }
 
 // Get zoom level based on the radius (approximate)
@@ -201,9 +202,35 @@ function getColorByMagnitude(magnitude) {
 
 // Load chat messages from the server
 async function loadChatMessages() {
+    if (typeof lat === 'undefined' || typeof lon === 'undefined') {
+        console.error("Latitude or Longitude is undefined. Cannot load chat messages.");
+        return;
+    }
+
     try {
-        const response = await fetch('http://127.0.0.1:8000/chats/');
+        // Construct the URL with latitude, longitude, and radius as query parameters
+        const url = `http://127.0.0.1:8000/chats/?user_lat=${lat}&user_lon=${lon}&radius=${radius}&limit=10`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
         let chatMessages = await response.json();
+
+        // Log the chat messages to check if data is being fetched correctly
+        console.log('Fetched chat messages:', chatMessages);
+
+        if (!Array.isArray(chatMessages) || chatMessages.length === 0) {
+            console.log("No nearby chats found.");
+            document.getElementById('chat-box').innerHTML = "<p>No chats found within this radius.</p>";
+            return;
+        }
 
         // Sort messages by created_at
         chatMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -256,7 +283,9 @@ async function sendMessage() {
         user_id: currentUserId,
         anonymous_name: displayName,
         message: message,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        latitude: lat,
+        longitude: lon
     };
 
     try {
@@ -282,14 +311,80 @@ async function sendMessage() {
     }
 }
 
+
+// Function to fetch nearby shelters using Google Places API
+async function findNearbyShelters() {
+    const latitude = document.getElementById('latitude').value;
+    const longitude = document.getElementById('longitude').value;
+    const radius = 16093; // 10 miles in meters
+    const placeType = "shelter";
+
+    // Construct the location in "latitude,longitude" format
+    const location = `${latitude},${longitude}`;
+
+    const url = `http://127.0.0.1:8000/api/nearby-shelters?location=${location}&radius=${radius}&place_type=${placeType}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error("Failed to fetch nearby shelters");
+        }
+
+        const data = await response.json();
+
+        if (data.status === "OK") {
+            displayShelters(data.results);
+        } else {
+            console.error("Error:", data.status, data.error_message);
+            alert(`Failed to retrieve shelters: ${data.status}`);
+        }
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        alert("Error fetching shelters.");
+    }
+}
+
+function displayShelters(shelters) {
+    const sheltersList = document.getElementById('shelters-list');
+    sheltersList.innerHTML = ''; // Clear any existing shelters
+
+    shelters.forEach(shelter => {
+        const shelterCard = document.createElement('div');
+        shelterCard.classList.add('shelter-card');
+
+        // Create a link to Google Maps for the shelter location
+        const shelterNameLink = document.createElement('a');
+        shelterNameLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shelter.name)}+${encodeURIComponent(shelter.vicinity)}`;
+        shelterNameLink.target = "_blank"; // Opens the link in a new tab
+        shelterNameLink.textContent = shelter.name;
+        shelterNameLink.classList.add('shelter-link');
+
+        const shelterName = document.createElement('h3');
+        shelterName.appendChild(shelterNameLink);
+
+        const shelterLocation = document.createElement('p');
+        shelterLocation.innerHTML = `<strong>Location:</strong> ${shelter.vicinity}`;
+
+        const shelterRating = document.createElement('p');
+        shelterRating.innerHTML = `<strong>Rating:</strong> ${shelter.rating || 'N/A'} (${shelter.user_ratings_total || 0} reviews)`;
+
+        shelterCard.appendChild(shelterName);
+        shelterCard.appendChild(shelterLocation);
+        shelterCard.appendChild(shelterRating);
+
+        // Append to shelters list container
+        sheltersList.appendChild(shelterCard);
+    });
+}
 // Window onload function to initialize map and chat
 window.onload = function () {
-    loadChatMessages(); // Load chat messages on page load
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function (position) {
             lat = position.coords.latitude;
             lon = position.coords.longitude;
             initMap(lat, lon);
+            loadChatMessages(); 
+            fetchNearbyShelters(lat, lon);
         }, function (error) {
             console.error("Error getting location:", error);
             alert("Could not get your location. Please allow location access to use the live chat.");

@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="author" content="Upasana Lamsal">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script src="./app.js" defer></script> <!-- Make sure path to app.js is correct -->
+    <script src="./app.js" defer></script> 
     <title>SeismoAlert: Live Chat & Map</title>
 </head>
+
 <body>
     <div class="topnav">
         <img alt="SeismoAlert Logo" src="../assets/logo.png">
@@ -16,37 +18,48 @@
         <a href="./shelters.html">Safe Zones</a>
         <a class="active" href="./chat.html">Live Chat</a>
     </div>
-    <div class="maincontainer">
-        <div class="lefthalfer">
-            <div id="map" style="height: 400px; width: 100%;"></div>
-            <div class="slider-container">
+
+     <div class="shelters-container">
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <section class="left-panel">
+            <div id="map" class="map-container"></div>
+            <div class="controls">
                 <label for="radius-slider">Chat Radius: <span id="radius-value">10</span> miles</label>
-                <input type="range" id="radius-slider" min="1" max="2000" value="10" step="1" oninput="updateRadius()">
-                <button id="see-all-button" onclick="seeAllEarthquakes()">See All Earthquakes</button>
+                <input type="range" id="radius-slider" class="radius-slider" min="1" max="2000" value="10" step="1" oninput="updateRadius()">
+                <button id="see-all-button" class="action-button" onclick="seeAllEarthquakes()">See All Earthquakes</button>
             </div>
-        </div>
-        <div class="righthalfer">
-            <div class="chat-container">
-                <div class="chat-box" id="chat-box"></div>
-                <div class="chat-input">
-                    <input type="text" id="display-name" placeholder="Enter your display name (optional)">
-                    <input type="text" id="chat-message" placeholder="Type your message here...">
-                    <button onclick="sendMessage()">Send</button>
-                </div>
-            </div>
+            
             <div class="legend">
                 <h4>Earthquake Severity</h4>
                 <ul>
-                    <li><span class="legend-color yellow"></span> Magnitude < 4 (Minor)</li>
+                    <li><span class="legend-color yellow"></span> Magnitude &lt; 4 (Minor)</li>
                     <li><span class="legend-color orange"></span> Magnitude 4 - 4.9 (Moderate)</li>
                     <li><span class="legend-color red"></span> Magnitude ≥ 5 (Severe)</li>
                 </ul>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <div class="bottomnav">
+        <section class="right-panel">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2>Live Chat</h2>
+                </div>
+                <div class="chat-box" id="chat-box"></div>
+                <div class="chat-input">
+                    <input type="text" id="display-name" placeholder="Display Name (optional)">
+                    <input type="text" id="chat-message" placeholder="Type your message here...">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+    <footer class="bottomnav">
         <p class="footer-text">Designed by <a class="highlight" href="https://www.linkedin.com/in/upasana-lamsal/">Upasana Lamsal</a> 2024</p>
-    </div>
+    </footer>
 </body>
+
 </html>
+

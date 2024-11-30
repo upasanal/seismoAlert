@@ -8,6 +8,8 @@ class ChatDetails(BaseModel):
     anonymous_name: Optional[str]
     message: str
     created_at: datetime
+    latitude: float
+    longitude: float
     
     class Config:
         orm_mode = True  # Enable ORM mode for SQLAlchemy compatibility

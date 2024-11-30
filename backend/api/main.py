@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from sqlmodel import Session, create_engine
 from typing import List, Optional
 from backend.api.service import *
@@ -8,6 +8,13 @@ from backend.models.userDetails import UserDetails
 from contextlib import asynccontextmanager
 from backend.models.subscriptionDetails import SubscriptionRequest, SubscriptionResponse
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from dotenv import load_dotenv
+import httpx
+
+load_dotenv()
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 
 DATABASE_URL = "sqlite:///./database.db"
@@ -59,6 +66,7 @@ def add_earthquake(
     location: str,
     latitude: float,
     longitude: float,
+    event_time: str,
     depth: Optional[float] = 0.0,
     session: Session = Depends(get_session)
 ):
@@ -73,7 +81,8 @@ def add_earthquake(
             location=location,
             latitude=latitude,
             longitude=longitude,
-            depth=depth
+            event_time = event_time,
+            depth=depth,
         )
         return {"message": "Earthquake created successfully", "earthquake": earthquake}
     except Exception as e:
@@ -88,8 +97,14 @@ def post_chat(chat_data: ChatDetails, session: Session = Depends(get_session)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/chats/", response_model=List[ChatDetails], tags=["Chat"])
-def list_chats(limit: int = 10, session: Session = Depends(get_session)):
-    return get_chats(session, limit)
+def list_chats(
+    user_lat: float = Query(...),
+    user_lon: float = Query(...),
+    radius: float = Query(10),
+    limit: int = Query(10),
+    session: Session = Depends(get_session)
+):
+    return get_chats(session, user_lat, user_lon, radius, limit)
 
 @app.put("/chats/{chat_id}", response_model=ChatDetails, tags=["Chat"])
 def edit_chat(chat_id: int, updated_message: str, session: Session = Depends(get_session)):
@@ -168,3 +183,32 @@ def delete_all_subscribers_endpoint(session: Session = Depends(get_session)):
         return {"message": f"Successfully deleted {num_deleted} subscribers"}
     else:
         return {"message": "No subscribers to delete or an error occurred"}
+    
+
+@app.get("/api/nearby-shelters", tags=["Shelters"])
+async def find_nearby_shelters(
+    location: str = Query(..., description="The location in 'latitude,longitude' format"),
+    radius: int = Query(1000, description="Radius in meters"),
+    place_type: str = Query("shelter", description="Type of place to search")
+):
+    # Google Places API URL
+    google_api_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+
+    # Parameters to pass to the Google Places API
+    params = {
+        "location": location,
+        "radius": radius,
+        "type": place_type,
+        "key": GOOGLE_API_KEY
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(google_api_url, params=params)
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail="Failed to fetch data from Google Places API")
+
+            return response.json()
+
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"An error occurred while making a request to Google Places API: {str(e)}")
