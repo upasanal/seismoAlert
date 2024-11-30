@@ -21,12 +21,11 @@
 
      <div class="shelters-container">
 
-    <!-- Main Container -->
     <main class="main-container">
         <section class="left-panel">
             <div id="map" class="map-container"></div>
             <div class="controls">
-                <label for="radius-slider">Chat Radius: <span id="radius-value">10</span> miles</label>
+                <label for="radius-slider">Chat + Map Radius: <span id="radius-value">10</span> miles</label>
                 <input type="range" id="radius-slider" class="radius-slider" min="1" max="2000" value="10" step="1" oninput="updateRadius()">
                 <button id="see-all-button" class="action-button" onclick="seeAllEarthquakes()">See All Earthquakes</button>
             </div>

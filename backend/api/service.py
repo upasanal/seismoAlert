@@ -26,23 +26,36 @@ def create_tables(engine):
 
     
 def create_earthquake(
-    session: Session, magnitude: float, location: str, latitude: float, longitude: float, event_time: str, depth: float = 0.0) -> Earthquake:
+    session: Session, magnitude: float, location: str, latitude: float, longitude: float, event_time: str, depth: float = 0.0
+) -> Earthquake:
     """
     Manually create an earthquake record in the database.
     """
+    existing_earthquake = session.exec(
+        select(Earthquake).where(
+            Earthquake.event_time == event_time,
+            Earthquake.magnitude == magnitude,
+            Earthquake.location == location,
+        )
+    ).first()
+
+    if existing_earthquake:
+        return existing_earthquake
+
     new_earthquake = Earthquake(
         magnitude=magnitude,
         location=location,
         latitude=latitude,
         longitude=longitude,
         depth=depth,
-        event_time= event_time,
+        event_time=event_time,
         created_at=datetime.now(tz=timezone.utc).isoformat(),
     )
     session.add(new_earthquake)
     session.commit()
     session.refresh(new_earthquake)
     return new_earthquake
+
 
 def get_earthquakes(session: Session) -> List[EarthquakeDetails]:
     earthquakes = session.exec(

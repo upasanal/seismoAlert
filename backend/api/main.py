@@ -7,6 +7,7 @@ from backend.models.chatDetails import ChatDetails
 from backend.models.userDetails import UserDetails
 from contextlib import asynccontextmanager
 from backend.models.subscriptionDetails import SubscriptionRequest, SubscriptionResponse
+from backend.models.subscriptionDetails import SubscriptionRequest, SubscriptionResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
@@ -151,7 +152,6 @@ def remove_user(user_id: int, session: Session = Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-from backend.models.subscriptionDetails import SubscriptionRequest, SubscriptionResponse
 
 @app.post("/subscribe/", response_model=SubscriptionResponse, tags=["Subscriptions"])
 def subscribe_user(request: SubscriptionRequest, session: Session = Depends(get_session)):

@@ -1,0 +1,12 @@
+fastapi
+sqlmodel
+uvicorn
+httpx
+twilio
+python-dotenv
+geopy
+requests
+websockets
+sqlite3
+pytest
+alembic

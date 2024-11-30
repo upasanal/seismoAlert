@@ -376,6 +376,64 @@ function displayShelters(shelters) {
         sheltersList.appendChild(shelterCard);
     });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const subscribeForm = document.getElementById("subscribe-form");
+
+    // Ensure the form exists on this page
+    if (subscribeForm) {
+        subscribeForm.addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent form from refreshing the page
+            const phoneInput = document.getElementById("phone-number");
+
+            // Ensure the input field exists
+            if (!phoneInput) {
+                console.error("Phone number input field not found.");
+                return;
+            }
+
+            const phoneNumber = phoneInput.value;
+            subscribeUser(phoneNumber); // Call the reusable function
+        });
+    } else {
+        console.log("Subscribe form not found on this page.");
+    }
+});
+
+async function subscribeUser(phoneNumber) {
+    const phoneRegex = /^\+\d{10,15}$/; // Validate phone number format
+
+    if (!phoneNumber || !phoneRegex.test(phoneNumber.trim())) {
+        alert("Please enter a valid phone number in the format specified.");
+        return false;
+    }
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/subscribe/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ phone_number: phoneNumber.trim() }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            alert(`Subscription successful! Subscribed phone: ${data.phone_number}`);
+            return true;
+        } else {
+            const errorData = await response.json();
+            alert(`Subscription failed: ${errorData.detail}`);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error during subscription:", error);
+        alert("An error occurred while subscribing. Please try again later.");
+        return false;
+    }
+}
+
+
 // Window onload function to initialize map and chat
 window.onload = function () {
     if (navigator.geolocation) {
