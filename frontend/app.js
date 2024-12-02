@@ -1,47 +1,49 @@
-// Edited version of app.js
 let map;
-let radius = 10; // Default chat radius in miles
-let websocket; // WebSocket connection for earthquake alerts
+let radius = 10; 
+let websocket; 
 let earthquakeMarkers = [];
-let lat, lon; // User's location
-let currentUserId = 1; // Placeholder for current user ID
-let reconnectInterval = 3000; // Interval for WebSocket reconnection in milliseconds
-let websocketUrl = `ws://127.0.0.1:8001/ws/alerts`; // WebSocket URL for earthquake alerts
+let lat, lon;
+let currentUserId = 1; 
+let reconnectInterval = 3000; 
+let websocketUrl = `ws://127.0.0.1:8001/ws/alerts`;
+let receivedAlerts = new Map();
 
-// Initialize the map
 function initMap(lat, lon) {
-    map = L.map('map').setView([lat, lon], getZoomLevel(radius)); // Set view using user's location and radius-based zoom level
+    if (!map) {
+        console.log("Initializing map...");  // Debugging line
+        map = L.map('map').setView([lat, lon], getZoomLevel(radius)); 
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+        }).addTo(map);
+    } else {
+        console.log("Updating map view...");  // Debugging line
+        map.setView([lat, lon], getZoomLevel(radius)); 
+    }
 
-    // Add tile layer to map
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    // Add marker for user's location
     const userMarker = L.marker([lat, lon], {
         icon: L.icon({
             iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
             iconSize: [32, 32],
             iconAnchor: [16, 32],
-        })
+        }),
     }).addTo(map);
-    userMarker.bindPopup(`<b>You are here</b><br>Latitude: ${lat.toFixed(6)}<br>Longitude: ${lon.toFixed(6)}`).openPopup();
 
-    // Fetch and plot earthquakes on the map
+    userMarker.bindPopup(
+        `<b>You are here</b><br>Latitude: ${lat.toFixed(6)}<br>Longitude: ${lon.toFixed(6)}`
+    ).openPopup();
+
     fetchEarthquakeData(lat, lon, radius);
-    connectWebSocket(); // Connect to WebSocket for live earthquake alerts
 }
 
-// Fetch earthquake data for the given latitude, longitude, and radius
 async function fetchEarthquakeData(latitude, longitude, radius) {
     try {
         const response = await fetch(`http://127.0.0.1:8000/earthquakes?lat=${latitude}&lon=${longitude}&radius=${radius}`);
         const earthquakeData = await response.json();
 
-        // Clear existing earthquake markers from the map
+        console.log("Fetched Earthquake Data:", earthquakeData);  // Debugging line
+
         clearEarthquakeMarkers();
 
-        // Add new markers for the fetched earthquakes
         earthquakeData.forEach((quake) => {
             addEarthquakeMarker(quake);
         });
@@ -62,7 +64,6 @@ async function seeAllEarthquakes() {
         // Set zoom level to show the whole world
         map.setView([0, 0], 2);
 
-        // Add markers for all earthquakes in the database
         earthquakeData.forEach((quake) => {
             addEarthquakeMarker(quake);
         });
@@ -71,7 +72,6 @@ async function seeAllEarthquakes() {
     }
 }
 
-// Function to add a marker for an earthquake to the map
 function addEarthquakeMarker(quake) {
     let markerColor;
     if (quake.magnitude < 4) {
@@ -84,7 +84,7 @@ function addEarthquakeMarker(quake) {
 
     const earthquakeIcon = L.circleMarker([quake.latitude, quake.longitude], {
         color: markerColor,
-        radius: quake.magnitude * 5, // Adjust radius based on magnitude
+        radius: quake.magnitude * 5, 
         fillOpacity: 0.7
     });
 
@@ -99,7 +99,6 @@ function addEarthquakeMarker(quake) {
     earthquakeMarkers.push(earthquakeIcon);
 }
 
-// Clear all earthquake markers from the map
 function clearEarthquakeMarkers() {
     earthquakeMarkers.forEach(marker => {
         map.removeLayer(marker);
@@ -107,20 +106,15 @@ function clearEarthquakeMarkers() {
     earthquakeMarkers = [];
 }
 
-// Update radius and refresh earthquake markers
 function updateRadius() {
     radius = document.getElementById("radius-slider").value;
     document.getElementById("radius-value").innerText = radius;
-
-    // Recalculate map zoom level based on radius
     map.setView([lat, lon], getZoomLevel(radius));
-
-    // Fetch earthquake data with updated radius
     fetchEarthquakeData(lat, lon, radius);
-    loadChatMessages(); 
+    loadChatMessages();
+    receivedAlerts.forEach((alertData, alertKey) => displayAlertMessage(alertKey, alertData));
 }
 
-// Get zoom level based on the radius (approximate)
 function getZoomLevel(radius) {
     if (radius <= 5) return 12;
     if (radius <= 10) return 11;
@@ -132,13 +126,13 @@ function getZoomLevel(radius) {
     if (radius <= 1000) return 5;
     if (radius <= 1500) return 4;
     if (radius <= 2000) return 3;
-    return 2; // For larger radii
+    return 2; 
 }
 
-// Connect to WebSocket for real-time earthquake alerts
+//how websocket connection works
 function connectWebSocket() {
     if (websocket) {
-        websocket.close(); // Close any existing connection before opening a new one
+        websocket.close(); 
     }
 
     websocket = new WebSocket(websocketUrl);
@@ -149,13 +143,17 @@ function connectWebSocket() {
             if (websocket.readyState === WebSocket.OPEN) {
                 websocket.send(JSON.stringify({ type: "ping" }));
             }
-        }, 25000); // Keep-alive ping every 25 seconds
+        }, 25000); 
     };
 
     websocket.onmessage = (event) => {
         const messageData = JSON.parse(event.data);
         if (messageData.type === "alert") {
-            plotEarthquake(messageData); // Plot the earthquake on the map
+            const alertKey = `${messageData.coordinates[0]}_${messageData.coordinates[1]}_${messageData.magnitude}`;
+            if (!receivedAlerts.has(alertKey)) {
+                receivedAlerts.set(alertKey, messageData); 
+                displayAlertMessage(alertKey, messageData); 
+            }
         } else if (messageData.type === "ping") {
             console.log("Ping received from server, WebSocket connection is active.");
         }
@@ -171,25 +169,6 @@ function connectWebSocket() {
     };
 }
 
-// Plot individual earthquake from WebSocket message
-function plotEarthquake(earthquake) {
-    const color = getColorByMagnitude(earthquake.magnitude);
-    const marker = L.circle([earthquake.coordinates[0], earthquake.coordinates[1]], {
-        radius: earthquake.magnitude * 100, // Scale radius based on magnitude
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.5
-    }).addTo(map);
-
-    marker.bindPopup(
-        `<strong>Magnitude:</strong> ${earthquake.magnitude}<br>
-         <strong>Location:</strong> ${earthquake.place}`
-    );
-
-    earthquakeMarkers.push(marker);
-}
-
-// Get color by earthquake magnitude
 function getColorByMagnitude(magnitude) {
     if (magnitude < 4) {
         return 'yellow';
@@ -200,7 +179,6 @@ function getColorByMagnitude(magnitude) {
     }
 }
 
-// Load chat messages from the server
 async function loadChatMessages() {
     if (typeof lat === 'undefined' || typeof lon === 'undefined') {
         console.error("Latitude or Longitude is undefined. Cannot load chat messages.");
@@ -208,7 +186,6 @@ async function loadChatMessages() {
     }
 
     try {
-        // Construct the URL with latitude, longitude, and radius as query parameters
         const url = `http://127.0.0.1:8000/chats/?user_lat=${lat}&user_lon=${lon}&radius=${radius}&limit=10`;
         const response = await fetch(url, {
             method: 'GET',
@@ -222,24 +199,35 @@ async function loadChatMessages() {
         }
 
         let chatMessages = await response.json();
+        const chatBox = document.getElementById('chat-box');
 
-        // Log the chat messages to check if data is being fetched correctly
-        console.log('Fetched chat messages:', chatMessages);
-
-        if (!Array.isArray(chatMessages) || chatMessages.length === 0) {
-            console.log("No nearby chats found.");
-            document.getElementById('chat-box').innerHTML = "<p>No chats found within this radius.</p>";
-            return;
+        // Remove the "No chats found" message if it exists
+        const noChatsMessage = chatBox.querySelector('.no-chats-message');
+        if (noChatsMessage) {
+            chatBox.removeChild(noChatsMessage);
         }
 
-        // Sort messages by created_at
+        // Clear all old chat messages but keep alerts
+        Array.from(chatBox.children).forEach((child) => {
+            if (!child.classList.contains('alert-message')) {
+                chatBox.removeChild(child);
+            }
+        });
+
+        // If no chats are found, add the "No chats found" message
+        if (!Array.isArray(chatMessages) || chatMessages.length === 0) {
+            console.log("No nearby chats found.");
+            if (!chatBox.querySelector('.no-chats-message')) {
+                const noChatsMessage = document.createElement('p');
+                noChatsMessage.textContent = "No chats found within this radius.";
+                noChatsMessage.classList.add('no-chats-message'); // Add a class for easy identification
+                chatBox.appendChild(noChatsMessage);
+            }
+            return; // Exit if no chats are found
+        }
+
+        // Add chat messages to the chat box
         chatMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-        // Clear the chat box before appending
-        const chatBox = document.getElementById('chat-box');
-        chatBox.innerHTML = '';
-
-        // Display each message in order
         chatMessages.forEach(chat => {
             displayChatMessage(chat);
         });
@@ -248,13 +236,11 @@ async function loadChatMessages() {
     }
 }
 
-// Display chat messages in the chat box
+
 function displayChatMessage(chat, isCurrentUser = false) {
     const chatBox = document.getElementById('chat-box');
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('chat-message');
-
-    // Apply the appropriate CSS class based on the message sender
     if (isCurrentUser || chat.user_id === currentUserId) {
         messageDiv.classList.add('user-message');
     } else {
@@ -263,12 +249,9 @@ function displayChatMessage(chat, isCurrentUser = false) {
 
     messageDiv.innerHTML = `<strong>${chat.anonymous_name || 'User'}:</strong> ${chat.message}`;
     chatBox.appendChild(messageDiv);
-
-    // Scroll to the bottom of the chat box to see the latest message
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// Send chat message through HTTP POST
 async function sendMessage() {
     const message = document.getElementById('chat-message').value;
     const displayName = document.getElementById('display-name').value.trim() || "Anonymous";
@@ -311,15 +294,11 @@ async function sendMessage() {
     }
 }
 
-
-// Function to fetch nearby shelters using Google Places API
 async function findNearbyShelters() {
     const latitude = document.getElementById('latitude').value;
     const longitude = document.getElementById('longitude').value;
-    const radius = 16093; // 10 miles in meters
+    const radius = 16093; 
     const placeType = "shelter";
-
-    // Construct the location in "latitude,longitude" format
     const location = `${latitude},${longitude}`;
 
     const url = `http://127.0.0.1:8000/api/nearby-shelters?location=${location}&radius=${radius}&place_type=${placeType}`;
@@ -346,16 +325,14 @@ async function findNearbyShelters() {
 
 function displayShelters(shelters) {
     const sheltersList = document.getElementById('shelters-list');
-    sheltersList.innerHTML = ''; // Clear any existing shelters
+    sheltersList.innerHTML = '';
 
     shelters.forEach(shelter => {
         const shelterCard = document.createElement('div');
         shelterCard.classList.add('shelter-card');
-
-        // Create a link to Google Maps for the shelter location
         const shelterNameLink = document.createElement('a');
         shelterNameLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shelter.name)}+${encodeURIComponent(shelter.vicinity)}`;
-        shelterNameLink.target = "_blank"; // Opens the link in a new tab
+        shelterNameLink.target = "_blank";
         shelterNameLink.textContent = shelter.name;
         shelterNameLink.classList.add('shelter-link');
 
@@ -371,29 +348,22 @@ function displayShelters(shelters) {
         shelterCard.appendChild(shelterName);
         shelterCard.appendChild(shelterLocation);
         shelterCard.appendChild(shelterRating);
-
-        // Append to shelters list container
         sheltersList.appendChild(shelterCard);
     });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     const subscribeForm = document.getElementById("subscribe-form");
-
-    // Ensure the form exists on this page
     if (subscribeForm) {
         subscribeForm.addEventListener("submit", function (event) {
-            event.preventDefault(); // Prevent form from refreshing the page
+            event.preventDefault(); 
             const phoneInput = document.getElementById("phone-number");
-
-            // Ensure the input field exists
             if (!phoneInput) {
                 console.error("Phone number input field not found.");
                 return;
             }
-
             const phoneNumber = phoneInput.value;
-            subscribeUser(phoneNumber); // Call the reusable function
+            subscribeUser(phoneNumber); 
         });
     } else {
         console.log("Subscribe form not found on this page.");
@@ -401,48 +371,77 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function subscribeUser(phoneNumber) {
-    const phoneRegex = /^\+\d{10,15}$/; // Validate phone number format
-
+    const phoneRegex = /^\+\d{10,15}$/;
     if (!phoneNumber || !phoneRegex.test(phoneNumber.trim())) {
         alert("Please enter a valid phone number in the format specified.");
         return false;
     }
+    if (websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+            type: "subscribe",
+            phone: phoneNumber.trim(),
+        }));
+        alert("Subscription request sent. Check your phone for confirmation.");
+    } else {
+        alert("WebSocket connection is not open. Please refresh the page and try again.");
+    }
+}
 
-    try {
-        const response = await fetch("http://127.0.0.1:8000/subscribe/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ phone_number: phoneNumber.trim() }),
-        });
+function displayAlertMessage(alertKey, alertData) {
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 3958.8; 
+        const toRadians = (deg) => (deg * Math.PI) / 180;
 
-        if (response.ok) {
-            const data = await response.json();
-            alert(`Subscription successful! Subscribed phone: ${data.phone_number}`);
-            return true;
-        } else {
-            const errorData = await response.json();
-            alert(`Subscription failed: ${errorData.detail}`);
-            return false;
+        const dLat = toRadians(lat2 - lat1);
+        const dLon = toRadians(lon2 - lon1);
+
+        const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+            Math.sin(dLon / 2) ** 2;
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    const radius = parseFloat(document.getElementById("radius-slider").value);
+    const distance = calculateDistance(lat, lon, alertData.coordinates[0], alertData.coordinates[1]);
+    const chatBox = document.getElementById('chat-box');
+    const existingAlert = Array.from(chatBox.children).find(
+        (child) => child.dataset.alertKey === alertKey
+    );
+
+    if (distance <= radius) {
+        if (!existingAlert) {
+            const alertDiv = document.createElement('div');
+            alertDiv.classList.add('alert-message');
+            alertDiv.dataset.alertKey = alertKey;
+
+            alertDiv.innerHTML = `
+                <strong>Earthquake Alert:</strong> 
+                Magnitude ${alertData.magnitude} at ${alertData.place}
+            `;
+
+            chatBox.appendChild(alertDiv);
+            chatBox.scrollTop = chatBox.scrollHeight; 
         }
-    } catch (error) {
-        console.error("Error during subscription:", error);
-        alert("An error occurred while subscribing. Please try again later.");
-        return false;
+    } else if (existingAlert) {
+        chatBox.removeChild(existingAlert);
     }
 }
 
 
-// Window onload function to initialize map and chat
+
 window.onload = function () {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        connectWebSocket();
+    }
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function (position) {
             lat = position.coords.latitude;
             lon = position.coords.longitude;
             initMap(lat, lon);
             loadChatMessages(); 
-            fetchNearbyShelters(lat, lon);
         }, function (error) {
             console.error("Error getting location:", error);
             alert("Could not get your location. Please allow location access to use the live chat.");
