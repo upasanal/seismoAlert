@@ -10,10 +10,8 @@ from typing import Optional, List
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
-last_connection_time = None
-
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.DEBUG, 
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler() 
@@ -47,14 +45,21 @@ class ConnectionManager:
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
-                logging.info(f"Sent message: {message}")  # Debug log to check if message is sent
+                logging.info(f"Successfully sent message to client: {connection.client}")
             except Exception as e:
                 logging.error(f"Failed to send message to a client: {e}")
+        if message.get("type") == "alert":
+            alert_message = f"Earthquake Alert! Magnitude: {message['magnitude']} at {message['place']}"
+            #send_sms_to_subscribers(session, alert_message)
+            #twilio ^^ connection function but spams twilio and i ran out of credits :)
+
 
 manager = ConnectionManager()
 
 async def fetch_earthquake_data():
     api_url = "https://earthquake.usgs.gov/fdsnws/event/1/query"
+
+    #fixed start
     start_time = "2024-11-30T00:00:00Z"
     params = {
         "starttime": start_time,
@@ -66,6 +71,7 @@ async def fetch_earthquake_data():
         try:
             response = requests.get(api_url, params=params)
             data = response.json()
+
             if response.status_code != 200:
                 logging.error(f"Failed to fetch data from USGS. Status Code: {response.status_code}, Response: {response.text}")
                 await asyncio.sleep(60)
@@ -78,13 +84,13 @@ async def fetch_earthquake_data():
                         if event_time is None:
                             logging.error(f"Missing 'time' key in event properties for event: {event}")
                             continue
-
                         magnitude = event["properties"]["mag"]
                         place = event["properties"]["place"]
                         coords = event["geometry"]["coordinates"]
                         epicenter = (coords[1], coords[0])
                         
                         event_time_utc = datetime.fromtimestamp(event_time / 1000, tz=timezone.utc)
+
                         new_earthquake = create_earthquake(
                             session,
                             magnitude=magnitude,
@@ -92,7 +98,7 @@ async def fetch_earthquake_data():
                             latitude=epicenter[0],
                             longitude=epicenter[1],
                             event_time=event_time_utc,
-                            depth=coords[2]  
+                            depth=coords[2] 
                         )
 
                         logging.info(f"Added Earthquake to DB: Magnitude: {magnitude}, Location: {place}")
@@ -107,6 +113,7 @@ async def fetch_earthquake_data():
                         await manager.broadcast(message, session)
                     except Exception as e:
                         logging.error(f"Error processing earthquake data: {e}")
+
             await asyncio.sleep(6000)
 
         except asyncio.CancelledError:
@@ -118,15 +125,10 @@ async def fetch_earthquake_data():
 
 @app.websocket("/ws/alerts")
 async def websocket_endpoint(websocket: WebSocket):
-    global last_connection_time
     await manager.connect(websocket)
     session = next(get_session())
-    last_connection_time = datetime.now(timezone.utc) 
 
     try:
-        missed_alerts = get_missed_alerts(session)
-        for alert in missed_alerts:
-            await websocket.send_json(alert)
         while True:
             try:
                 data = await asyncio.wait_for(websocket.receive_json(), timeout=30)
@@ -152,23 +154,3 @@ async def websocket_endpoint(websocket: WebSocket):
         logging.error(f"Unexpected error with WebSocket: {e}")
     finally:
         session.close()
-
-def get_last_connected_time():
-    return last_connection_time
-
-def get_missed_alerts(session: Session):
-    """
-    Fetch earthquakes from the database that occurred after the WebSocket server was last running.
-    This should return alerts that were missed during any downtime.
-    """
-    missed_alerts = session.query(Earthquake).filter(Earthquake.event_time > get_last_connected_time()).all()
-    alert_messages = []
-    for earthquake in missed_alerts:
-        alert_messages.append({
-            "type": "alert",
-            "magnitude": earthquake.magnitude,
-            "place": earthquake.location,
-            "coordinates": (earthquake.latitude, earthquake.longitude),
-            "depth": earthquake.depth,
-        })
-    return alert_messages

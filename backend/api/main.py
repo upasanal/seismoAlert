@@ -28,19 +28,17 @@ def get_session():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # This will be run when the app starts
     create_tables(engine)
     yield
-    # This will be run when the app stops (cleanup logic can go here)
 
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace "*" with your frontend domain in production, e.g., ["http://localhost:3000"]
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods (e.g., GET, POST, PUT, DELETE)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"], 
+    allow_headers=["*"],  
 )
 
 def get_session():
@@ -75,7 +73,6 @@ def add_earthquake(
     Endpoint to manually create a new earthquake in the database for testing purposes.
     """
     try:
-        # Call the service function to create an earthquake
         earthquake = create_earthquake(
             session=session,
             magnitude=magnitude,
@@ -89,7 +86,6 @@ def add_earthquake(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Chat Routes
 @app.post("/chats/", response_model=ChatDetails, tags=["Chat"])
 def post_chat(chat_data: ChatDetails, session: Session = Depends(get_session)):
     try:

@@ -147,6 +147,7 @@ function connectWebSocket() {
     };
 
     websocket.onmessage = (event) => {
+        console.log("Message received:", event.data);
         const messageData = JSON.parse(event.data);
         if (messageData.type === "alert") {
             const alertKey = `${messageData.coordinates[0]}_${messageData.coordinates[1]}_${messageData.magnitude}`;
@@ -201,29 +202,26 @@ async function loadChatMessages() {
         let chatMessages = await response.json();
         const chatBox = document.getElementById('chat-box');
 
-        // Remove the "No chats found" message if it exists
         const noChatsMessage = chatBox.querySelector('.no-chats-message');
         if (noChatsMessage) {
             chatBox.removeChild(noChatsMessage);
         }
 
-        // Clear all old chat messages but keep alerts
         Array.from(chatBox.children).forEach((child) => {
             if (!child.classList.contains('alert-message')) {
                 chatBox.removeChild(child);
             }
         });
 
-        // If no chats are found, add the "No chats found" message
         if (!Array.isArray(chatMessages) || chatMessages.length === 0) {
             console.log("No nearby chats found.");
             if (!chatBox.querySelector('.no-chats-message')) {
                 const noChatsMessage = document.createElement('p');
                 noChatsMessage.textContent = "No chats found within this radius.";
-                noChatsMessage.classList.add('no-chats-message'); // Add a class for easy identification
+                noChatsMessage.classList.add('no-chats-message'); 
                 chatBox.appendChild(noChatsMessage);
             }
-            return; // Exit if no chats are found
+            return;
         }
 
         // Add chat messages to the chat box
@@ -388,8 +386,9 @@ async function subscribeUser(phoneNumber) {
 }
 
 function displayAlertMessage(alertKey, alertData) {
+    //https://www.movable-type.co.uk/scripts/latlong.html
     function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 3958.8; 
+        const R = 3958.8;
         const toRadians = (deg) => (deg * Math.PI) / 180;
 
         const dLat = toRadians(lat2 - lat1);
@@ -401,32 +400,54 @@ function displayAlertMessage(alertKey, alertData) {
             Math.sin(dLon / 2) ** 2;
 
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+        return R * c; 
     }
 
-    const radius = parseFloat(document.getElementById("radius-slider").value);
-    const distance = calculateDistance(lat, lon, alertData.coordinates[0], alertData.coordinates[1]);
-    const chatBox = document.getElementById('chat-box');
-    const existingAlert = Array.from(chatBox.children).find(
-        (child) => child.dataset.alertKey === alertKey
-    );
-
-    if (distance <= radius) {
-        if (!existingAlert) {
-            const alertDiv = document.createElement('div');
-            alertDiv.classList.add('alert-message');
-            alertDiv.dataset.alertKey = alertKey;
-
-            alertDiv.innerHTML = `
-                <strong>Earthquake Alert:</strong> 
-                Magnitude ${alertData.magnitude} at ${alertData.place}
-            `;
-
-            chatBox.appendChild(alertDiv);
-            chatBox.scrollTop = chatBox.scrollHeight; 
+    try {
+        const radiusSlider = document.getElementById("radius-slider");
+        if (!radiusSlider) {
+            console.error("Radius slider element not found.");
+            return;
         }
-    } else if (existingAlert) {
-        chatBox.removeChild(existingAlert);
+        const radius = parseFloat(radiusSlider.value);
+
+        if (typeof lat === "undefined" || typeof lon === "undefined") {
+            console.error("User location (lat/lon) is undefined. Cannot calculate distance.");
+            return;
+        }
+
+        const distance = calculateDistance(lat, lon, alertData.coordinates[0], alertData.coordinates[1]);
+
+        const chatBox = document.getElementById("chat-box");
+        if (!chatBox) {
+            console.error("Chat box element not found.");
+            return;
+        }
+        const existingAlert = Array.from(chatBox.children).find(
+            (child) => child.dataset.alertKey === alertKey
+        );
+
+        if (distance <= radius) {
+            if (!existingAlert) {
+                const alertDiv = document.createElement("div");
+                alertDiv.classList.add("alert-message");
+                alertDiv.dataset.alertKey = alertKey;
+
+                alertDiv.innerHTML = `
+                    <strong>Earthquake Alert:</strong> 
+                    Magnitude ${alertData.magnitude} at ${alertData.place}
+                `;
+
+                chatBox.appendChild(alertDiv);
+                chatBox.scrollTop = chatBox.scrollHeight; 
+                console.log(`Displayed alert: ${alertKey}`);
+            }
+        } else if (existingAlert) {
+            chatBox.removeChild(existingAlert);
+            console.log(`Removed alert: ${alertKey}`);
+        }
+    } catch (error) {
+        console.error("Error in displayAlertMessage:", error);
     }
 }
 
