@@ -10,40 +10,30 @@
     <div class="topnav">
         <img alt="SeismoAlert Logo" src="../assets/logo.png">
         <a href="./index.html">Home</a>
-        <a class="active"  href="./shelters.html">Safe Zones</a>
+        <a class="active" href="./shelters.html">Safe Zones</a>
         <a href="./chat.html">Live Chat</a>
     </div>
 
     <div class="shelters-container">
         <h2>Nearby Safe Zones</h2>
-        <div class="shelter-card">
-            <h3>Shelter 1</h3>
-            <p><strong>Location:</strong> Community Hall, Patan</p>
-            <p><strong>Capacity:</strong> 100 people</p>
-            <p><strong>Contact:</strong> +977-1234567890</p>
+        <div>
+            <label for="latitude">Latitude:</label>
+            <input type="text" id="latitude" value="35.034116">
+            <label for="longitude">Longitude:</label>
+            <input type="text" id="longitude" value="-80.861375">
+            <button id="search-shelters" onclick="findNearbyShelters()">Search Shelters</button>
         </div>
-        <div class="shelter-card">
-            <h3>Shelter 2</h3>
-            <p><strong>Location:</strong> Kathmandu City School, Thamel</p>
-            <p><strong>Capacity:</strong> 200 people</p>
-            <p><strong>Contact:</strong> +977-0987654321</p>
-        </div>
-        <div class="shelter-card">
-            <h3>Shelter 3</h3>
-            <p><strong>Location:</strong> Bhaktapur Sports Ground, Bhaktapur</p>
-            <p><strong>Capacity:</strong> 150 people</p>
-            <p><strong>Contact:</strong> +977-1122334455</p>
-        </div>
-        <div class="shelter-card">
-            <h3>Shelter 4</h3>
-            <p><strong>Location:</strong> Pokhara Conference Center, Lakeside</p>
-            <p><strong>Capacity:</strong> 250 people</p>
-            <p><strong>Contact:</strong> +977-5566778899</p>
+        
+        <div id="shelters-list" class="shelters-list">
+            <!-- Shelters will be dynamically added here -->
         </div>
     </div>
 
     <div class="bottomnav">
         <p class="footer-text">Designed by <a class="highlight" href="https://www.linkedin.com/in/upasana-lamsal/">Upasana Lamsal</a> 2024</p>
     </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
+
